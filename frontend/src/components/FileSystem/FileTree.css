@@ -1,0 +1,50 @@
+/* FileTree.css */
+
+.file-tree-container {
+  display: flex;
+  height: 100vh; /* Full viewport height */
+  overflow: hidden;
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent background */
+}
+
+.file-tree-sidebar {
+  width: 300px; /* Fixed width for the file tree sidebar */
+  border-right: 1px solid #ddd; /* Border to separate file tree from content */
+  overflow-y: auto; /* Allow scrolling if the file tree is long */
+  padding: 16px;
+  box-sizing: border-box;
+  background-color: rgba(255, 255, 255, 0.9); /* Ensure sidebar is readable */
+  position: fixed; /* Fixed position to keep sidebar on the left */
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 1; /* Ensures the sidebar stays above other content */
+}
+
+.file-content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto; /* Allow scrolling if the content is long */
+  box-sizing: border-box;
+  margin-left: 300px; /* Offset content to account for the fixed sidebar */
+  margin-top: 60px; /* Adjust for navbar height */
+  height: calc(100vh - 60px); /* Full height minus navbar height */
+  background-color: transparent; /* Initially transparent */
+  color: black; /* Default text color */
+}
+
+/* Navbar style */
+.navbar {
+  position: fixed; /* Ensure navbar stays on top */
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2; /* Ensure it is above the file tree */
+  background-color: white; /* Change as needed */
+  padding: 10px; /* Add some padding */
+}
+
+.text-content {
+  margin-top: 60px; /* Adjust margin to prevent overlap with navbar */
+}
