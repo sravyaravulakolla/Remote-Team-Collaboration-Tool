@@ -43,7 +43,6 @@ router.post("/:phaseId/tasks", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
-
 // Route to delete a task and update order of remaining tasks
 router.delete("/:phaseId/tasks/:taskId", async (req, res) => {
   const { phaseId, taskId } = req.params;
@@ -54,7 +53,8 @@ router.delete("/:phaseId/tasks/:taskId", async (req, res) => {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    await task.remove();
+    // Use deleteOne or findByIdAndDelete instead of remove
+    await task.deleteOne();  // Or use Task.findByIdAndDelete(taskId);
 
     // Reorder remaining tasks
     await Task.updateMany(
@@ -68,6 +68,7 @@ router.delete("/:phaseId/tasks/:taskId", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
 router.get("/:phaseId/tasks", async (req, res) => {
   const { phaseId } = req.params;
 

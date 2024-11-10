@@ -4,6 +4,9 @@ const notFound=(req, res, next)=>{
     next(error);
 };
 const errorHandler=(err, req, res, next)=>{
+    if (res.headersSent) {
+        return next(err); // Delegate to default Express error handler if headers are already sent
+      }
     const statusCode= res.statusCode===200 ? 500: res.statusCode;
     res.status(statusCode);
     res.json({
