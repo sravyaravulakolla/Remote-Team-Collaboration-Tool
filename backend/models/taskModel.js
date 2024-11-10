@@ -9,7 +9,7 @@ const taskModel = mongoose.Schema({
   },
   dueDate: { type: Date, default: null },
   completed: { type: Boolean, default: false },
-  status: { type: String, enum: ["pending", "completed"], default: "pending" },
+  status: { type: String, enum: ["pending","in-progress", "completed"], default: "pending" },
   chatId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Chat",

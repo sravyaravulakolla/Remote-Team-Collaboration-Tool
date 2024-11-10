@@ -73,7 +73,7 @@ router.get("/:chatId/phases", async (req, res) => {
         return res.status(404).json({ message: "No phases found for this chat" });
       }
       res.json({ phases });
-      console.log('phases',phases);
+      // console.log('phases',phases);
     } catch (error) {
       console.error("Error fetching phases:", error);
       res.status(500).json({ message: "Server error" });

@@ -96,7 +96,7 @@ router.get("/:phaseId/tasks", async (req, res) => {
         return taskWithAssignedToName;
       })
     );
-    console.log(tasksWithAssignedToName);
+    // console.log(tasksWithAssignedToName);
     // Send the tasks with the assigned user's name included
     res.json({ tasks: tasksWithAssignedToName });
   } catch (error) {
@@ -104,5 +104,33 @@ router.get("/:phaseId/tasks", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+router.put("/:phaseId/tasks/:taskId/status", async (req, res) => {
+  const { phaseId, taskId } = req.params;  // Get phaseId and taskId from the URL params
+  const { status } = req.body;  // The status is sent in the request body
+  
+  // Check if status is valid
+  if (!status || !["pending", "in-progress", "completed"].includes(status)) {
+    return res.status(400).json({ message: "Invalid status provided" });
+  }
+
+  try {
+    const task = await Task.findById(taskId); // Find the task by its ID
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    // Update the task's status field
+    task.status = status;
+    await task.save();
+
+    // Send the updated task back in the response
+    res.json({ message: "Task status updated successfully", task });
+  } catch (error) {
+    console.error("Error updating task status:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 
 module.exports = router;
