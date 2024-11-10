@@ -79,17 +79,25 @@ router.get("/:phaseId/tasks", async (req, res) => {
       return res.status(404).json({ message: "No tasks found for this phase" });
     }
 
-    // For each task, fetch the user assigned to the task
-    const tasksWithUsers = await Promise.all(
+    // For each task, fetch the user assigned to the task and add their name
+    const tasksWithAssignedToName = await Promise.all(
       tasks.map(async (task) => {
+        // Fetch the user assigned to this task
         const user = await User.findById(task.assignedTo).select("name");
-        task.assignedToName = user ? user.name : "Unknown"; // Add the user's name to the task
-        return task; // Return the task with the added field
+
+        // Dynamically add the assignedToName field to the task
+        const taskWithAssignedToName = {
+          ...task.toObject(), // Convert Mongoose document to plain object
+          assignedToName: user ? user.name : "Unknown" // Add the assignedToName field
+        };
+
+        // Return the modified task
+        return taskWithAssignedToName;
       })
     );
-
-    // Send the tasks with the assigned user's name
-    res.json({ tasks: tasksWithUsers });
+    console.log(tasksWithAssignedToName);
+    // Send the tasks with the assigned user's name included
+    res.json({ tasks: tasksWithAssignedToName });
   } catch (error) {
     console.error("Error fetching tasks for phase:", error);
     res.status(500).json({ message: "Server error" });
