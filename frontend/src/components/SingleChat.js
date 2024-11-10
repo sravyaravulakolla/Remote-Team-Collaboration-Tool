@@ -29,7 +29,8 @@ import { useHistory } from "react-router-dom";
 import Dashboard from './FileSystem/Dashboard';
 import FileExplorer from './FileSystem/FileExplorer';
 import ActivityFeed from './FileSystem/ActivityFeed';
-
+import TaskManagerAdmin from "./Tasks/TaskManagerAdmin";
+import UserTaskViewer from "./Tasks/UserTaskViewer";
 const ENDPOINT = "http://localhost:5000";
 var socket, selectedChatCompare;
 
@@ -57,7 +58,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       preserveAspectRatio: "xMidYMid slice",
     },
   };
-
   useEffect(() => {
     socket = io(ENDPOINT);
     socket.emit("setup", user);
@@ -71,8 +71,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
     socket.on("join call", () => setIsInCall(true));
     socket.on("call end", () => setIsInCall(false));
-  }, [user]);
-
+  }, []);
   const handleCallToggle = () => {
     if (!isInCall) {
       const videoCallUrl = `/video-call/${selectedChat._id}`;
@@ -100,11 +99,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           },
           config
         );
+        // console.log(data);
         socket.emit("new message", data);
+
         setMessages([...messages, data]);
       } catch (error) {
         toast({
-          title: "Error Occurred!",
+          title: "Error Occured!",
           description: "Failed to send the Message",
           status: "error",
           duration: 5000,
@@ -114,7 +115,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       }
     }
   };
-
   useEffect(() => {
     socket = io(ENDPOINT);
     socket.emit("setup", user);
@@ -124,9 +124,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     socket.on("typing", () => setIsTyping(true));
     socket.on("stop typing", () => setIsTyping(false));
   }, []);
-
   const fetchMessages = async () => {
-    if (!selectedChat) return;
+    if (!selectedChat) {
+      return;
+    }
     try {
       const config = {
         headers: {
@@ -138,12 +139,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         `/api/message/${selectedChat._id}`,
         config
       );
+      // console.log(messages);
       setMessages(data);
       setLoading(false);
       socket.emit("join chat", selectedChat._id);
     } catch (error) {
       toast({
-        title: "Error Occurred!",
+        title: "Error Occured!",
         description: "Failed to load the messages",
         status: "error",
         duration: 5000,
@@ -152,15 +154,18 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       });
     }
   };
-
   useEffect(() => {
     fetchMessages();
     selectedChatCompare = selectedChat;
   }, [selectedChat]);
+  // console.log(notifications,"--------------");
 
   useEffect(() => {
     socket.on("message received", (newMessageReceived) => {
-      if (!selectedChatCompare || selectedChatCompare._id !== newMessageReceived.chat._id) {
+      if (
+        !selectedChatCompare ||
+        selectedChatCompare._id !== newMessageReceived.chat._id
+      ) {
         if (!notifications.includes(newMessageReceived)) {
           setNotifications([newMessageReceived, ...notifications]);
           setFetchAgain(!fetchAgain);
@@ -170,19 +175,19 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       }
     });
   });
-
   const typingHandler = (e) => {
     setNewMessage(e.target.value);
+    //Typing indicator logic
     if (!socketConnected) return;
     if (!typing) {
       setTyping(true);
     }
     socket.emit("typing", selectedChat._id);
     let lastTypingTime = new Date().getTime();
-    const timeLength = 3000;
+    var timeLength = 3000;
     setTimeout(() => {
-      const timeNow = new Date().getTime();
-      const timeDiff = timeNow - lastTypingTime;
+      var timeNow = new Date().getTime();
+      var timeDiff = timeNow - lastTypingTime;
       if (timeDiff >= timeLength && typing) {
         socket.emit("stop typing", selectedChat._id);
         setTyping(false);
@@ -190,61 +195,105 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }, timeLength);
   };
 
-  return (
-    <Box height="100vh" display="flex" flexDirection="column">
-      <Tabs variant="soft-rounded" colorScheme="orange" flex="1">
-        <TabList>
-          <Tab>Chat</Tab>
-          <Tab>File System</Tab>
-        </TabList>
-
-        <TabPanels flex="1">
-          {/* Chat Tab */}
-          <TabPanel height="100%">
-            {selectedChat ? (
+  return(
+    <>
+      {selectedChat ? (
+        <>
+          <Text
+            fontSize={{ base: "28px", md: "30px" }}
+            pb={3}
+            px={2}
+            w={"100%"}
+            fontFamily={"Work sans"}
+            display={"flex"}
+            justifyContent={{ base: "space-between" }}
+            alignItems={"center"}
+          >
+            <IconButton
+              display={{ base: "flex", md: "none" }}
+              icon={<ArrowBackIcon />}
+              onClick={() => setSelectedChat("")}
+            />
+            <Button
+              onClick={handleCallToggle}
+              ml={4}
+              colorScheme={isInCall ? "red" : "blue"}
+            >
+              {isInCall ? <CloseIcon boxSize={6} /> : <PhoneIcon boxSize={6} />}
+            </Button>
+            {!selectedChat.isGroupChat ? (
               <>
-                <Text
-                  fontSize="30px"
-                  pb={3}
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
+                {getSender(user, selectedChat.users)}
+                <ProfileModal user={getSenderFull(user, selectedChat.users)} />
+              </>
+            ) : (
+              <>
+                {selectedChat.chatName.toUpperCase()}
+                <UpdateGroupChatModal
+                  fetchAgain={fetchAgain}
+                  setFetchAgain={setFetchAgain}
+                  fetchMessages={fetchMessages}
+                />
+              </>
+            )}
+          </Text>
+          <Tabs width={"100%"} h={"80%"} colorScheme="blue">
+            <TabList>
+              <Tab>Chats</Tab>
+              <Tab>Files</Tab>
+              <Tab>Tasks</Tab>
+            </TabList>
+            <TabPanels h={"100%"}>
+              <TabPanel height={"100%"}>
+                <Box
+                  display={"flex"}
+                  flexDir={"column"}
+                  justifyContent={"flex-end"}
+                  p={3}
+                  bg={"#E8E8E8"}
+                  w={"100%"}
+                  h={"90%"}
+                  borderRadius={"lg"}
+                  overflowY={"auto"}
                 >
-                  <IconButton icon={<ArrowBackIcon />} onClick={() => setSelectedChat("")} />
-                  {isRinging && <Text>Ringing...</Text>}
-                  <Button onClick={handleCallToggle} colorScheme={isInCall ? "red" : "blue"} ml={4}>
-                    {isInCall ? <CloseIcon boxSize={6} /> : <PhoneIcon boxSize={6} />}
-                  </Button>
-                  {!selectedChat.isGroupChat ? getSender(user, selectedChat.users) : selectedChat.chatName.toUpperCase()}
-                  <ProfileModal user={getSenderFull(user, selectedChat.users)} />
-                  {selectedChat.isGroupChat && <UpdateGroupChatModal fetchAgain={fetchAgain} setFetchAgain={setFetchAgain} />}
-                </Text>
-
-                <Box bg="#E8E8E8" p={3} w="100%" borderRadius="lg" overflowY="hidden" flex="1">
                   {loading ? (
-                    <Spinner size="xl" w={20} h={20} alignSelf="center" margin="auto" />
+                    <Spinner
+                      size={"xl"}
+                      w={20}
+                      h={20}
+                      alignSelf={"center"}
+                      margin={"auto"}
+                    />
                   ) : (
-                    <ScrollableChat messages={messages} />
+                    <div>
+                      <ScrollableChat messages={messages} />
+                    </div>
                   )}
+                </Box>
+                <Box>
                   <FormControl onKeyDown={sendMessage} isRequired mt={3}>
-                    {isTyping && <Lottie options={defaultOptions} width={70} />}
+                    {isTyping ? (
+                      <div>
+                        <Lottie
+                          options={defaultOptions}
+                          width={70}
+                          style={{ marginBottom: 15, marginLeft: 0 }}
+                        />
+                      </div>
+                    ) : (
+                      <></>
+                    )}
                     <Input
-                      variant="filled"
-                      bg="#E0E0E0"
-                      placeholder="Enter a message..."
+                      variant={"filled"}
+                      bg={"#E0E0E0"}
+                      placeholder="Enter a message.."
                       onChange={typingHandler}
                       value={newMessage}
                     />
                   </FormControl>
                 </Box>
-              </>
-            ) : (
-              <Text fontSize="3xl">Click on a user to start chatting</Text>
-            )}
-          </TabPanel>
-
-          {/* File System Tab */}
-          <TabPanel>
+              </TabPanel>
+              <TabPanel>
             <FileSystemOptions  
               onSelectOption={(option) => {
                 setSelectedTab(option);
@@ -257,9 +306,51 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             {selectedTab === 'FileExplorer' && selectedChat && <FileExplorer chatId={selectedChat._id} userId={user._id} selectedBranch={selectedBranch} />}
             {selectedTab === 'ActivityFeed' && selectedChat &&<ActivityFeed chatId={selectedChat._id} userId={user._id} selectedBranch={selectedBranch} />}
           </TabPanel>
-        </TabPanels>
-      </Tabs>
-    </Box>
+              <TabPanel height={"100%"}>
+                {selectedChat.users.length === 2 ||
+                user._id === selectedChat.groupAdmin._id ? (
+                  <Box
+                    display={"flex"}
+                    flexDir={"column"}
+                    p={3}
+                    bg={"#E8E8E8"}
+                    w={"100%"}
+                    h={"100%"}
+                    borderRadius={"lg"}
+                    overflowY={"auto"}
+                  >
+                    <TaskManagerAdmin selectedChat={selectedChat} />
+                  </Box>
+                ) : (
+                  <Box
+      display={"flex"}
+      flexDir={"column"}
+      p={3}
+      bg={"#E8E8E8"}
+      w={"100%"}
+      h={"100%"}
+      borderRadius={"lg"}
+      overflowY={"auto"}
+    >
+      <UserTaskViewer selectedChat={selectedChat} user={user} />
+    </Box>)}
+              </TabPanel>
+            </TabPanels>
+          </Tabs>
+        </>
+      ) : (
+        <Box
+          display={"flex"}
+          alignItems={"center"}
+          justifyContent={"center"}
+          h={"100%"}
+        >
+          <Text fontSize={"3xl"} pb={3} fontFamily={"Work sans"}>
+            Click on a user to start chatting
+          </Text>
+        </Box>
+      )}
+    </>
   );
 };
 

@@ -8,6 +8,8 @@ const chatRoutes= require("./routes/chatRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const videoRoutes = require("./routes/videoRoutes"); // Import video routes
 const repoRoutes = require("./routes/repoRoutes"); // Import repo routes
+const taskRoutes = require("./routes/taskRoutes");
+const phaseRoutes = require("./routes/phaseRoutes"); 
 const { notFound, errorHandler } = require("./middleware/errorMiddleWare");
 
 dotenv.config();
@@ -28,6 +30,8 @@ app.use('/api/message', messageRoutes);
 app.use('/api/zoom', videoRoutes); // Zoom video routes
 app.use('/api/repo', repoRoutes); // Use the repo routes for '/api/repo'
 
+app.use("/api/tasks", taskRoutes);
+app.use("/api/phase", phaseRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
