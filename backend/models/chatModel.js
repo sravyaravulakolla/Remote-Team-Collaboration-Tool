@@ -18,7 +18,7 @@ const chatModel= mongoose.Schema(
                 ref:"User",
             },
         ],
-        repositoryName: { type: String, required: true },
+        repositoryName: { type: String, required: false },
         latestMessage:{
             type: mongoose.Schema.Types.ObjectId,
             ref: "Message",

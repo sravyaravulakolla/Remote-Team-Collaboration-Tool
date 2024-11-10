@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import FileTree from './FileTree';
-import { Box, Spinner, Text } from '@chakra-ui/react';
+import { Box, Spinner, Text, Center, Alert, AlertIcon, AlertTitle, AlertDescription } from '@chakra-ui/react';
 import axios from 'axios';
 
 const FileExplorer = ({ selectedBranch, chatId, userId }) => {  
@@ -26,38 +26,57 @@ const FileExplorer = ({ selectedBranch, chatId, userId }) => {
     };
 
     fetchRepoInfo();
-  }, [selectedBranch,chatId]); // Re-fetch when chatId changes
+  }, [selectedBranch, chatId]); // Re-fetch when chatId changes
 
   if (loading) {
     return (
-      <Box p={4} display="flex" justifyContent="center" alignItems="center">
-        <Spinner size="xl" />
-        <Text ml={4}>Loading repository details...</Text>
-      </Box>
+      <Center p={6}>
+        <Box textAlign="center">
+          <Spinner size="xl" color="teal.500" />
+          <Text mt={4} fontSize="lg" fontWeight="medium">Loading repository details...</Text>
+        </Box>
+      </Center>
     );
   }
 
   if (error) {
     return (
-      <Box p={4} color="red.500" textAlign="center">
-        <Text>{error}</Text>
-      </Box>
+      <Center p={6}>
+        <Alert status="error" variant="left-accent" borderRadius="md" width="full" maxWidth="600px">
+          <AlertIcon />
+          <Box>
+            <AlertTitle>Error!</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Box>
+        </Alert>
+      </Center>
     );
   }
 
   if (!userId) {
     return (
-      <Box p={4} color="red.500" textAlign="center">
-        <Text>User information is missing or invalid.</Text>
-      </Box>
+      <Center p={6}>
+        <Alert status="warning" variant="left-accent" borderRadius="md" width="full" maxWidth="600px">
+          <AlertIcon />
+          <Box>
+            <AlertTitle>Warning!</AlertTitle>
+            <AlertDescription>User information is missing or invalid.</AlertDescription>
+          </Box>
+        </Alert>
+      </Center>
     );
   }
 
   return (
-    <Box p={4}>
+    <Box p={4} bg="gray.50" borderRadius="lg" boxShadow="sm">
       {/* Render the FileTree component with repo info, branch, and userId */}
       {repoInfo.owner && repoInfo.repo && (
-        <FileTree owner={repoInfo.owner} repo={repoInfo.repo} branch={selectedBranch} userId={userId} />
+        <FileTree 
+          owner={repoInfo.owner} 
+          repo={repoInfo.repo} 
+          branch={selectedBranch} 
+          userId={userId} 
+        />
       )}
     </Box>
   );

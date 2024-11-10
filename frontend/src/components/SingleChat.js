@@ -293,7 +293,17 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                   </FormControl>
                 </Box>
               </TabPanel>
-              <TabPanel>
+              <TabPanel height={"100%"}>
+              <Box
+                    display={"flex"}
+                    flexDir={"column"}
+                    p={3}
+                    bg={"#E8E8E8"}
+                    w={"100%"}
+                    h={"100%"}
+                    borderRadius={"lg"}
+                    overflowY={"auto"}
+                  >
             <FileSystemOptions  
               onSelectOption={(option) => {
                 setSelectedTab(option);
@@ -305,6 +315,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             {selectedTab === 'Dashboard' && selectedChat && <Dashboard chatId={selectedChat._id} onBranchChange={setSelectedBranch} />}
             {selectedTab === 'FileExplorer' && selectedChat && <FileExplorer chatId={selectedChat._id} userId={user._id} selectedBranch={selectedBranch} />}
             {selectedTab === 'ActivityFeed' && selectedChat &&<ActivityFeed chatId={selectedChat._id} userId={user._id} selectedBranch={selectedBranch} />}
+            </Box>
           </TabPanel>
               <TabPanel height={"100%"}>
                 {selectedChat.users.length === 2 ||
