@@ -57,14 +57,22 @@ const MyChats = ({fetchAgain}) => {
         justifyContent={"space-between"}
         alignItems={"center"}
       >
+<<<<<<< HEAD
         My Teams
+=======
+        My Chats
+>>>>>>> 7ac9e092c922359cb1d0414dd04953504d570f77
         <GroupChatModal>
           <Button
             display={"flex"}
             fontSize={{ base: "17px", md: "10px", lg: "17px" }}
             rightIcon={<AddIcon />}
           >
+<<<<<<< HEAD
             New Team
+=======
+            New Group Chat
+>>>>>>> 7ac9e092c922359cb1d0414dd04953504d570f77
           </Button>
         </GroupChatModal>
       </Box>

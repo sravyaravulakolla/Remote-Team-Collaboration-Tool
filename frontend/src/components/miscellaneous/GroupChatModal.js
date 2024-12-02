@@ -91,7 +91,11 @@ const GroupChatModal = ({ children }) => {
       setChats([data, ...chats]);
       onClose();
       toast({
+<<<<<<< HEAD
         title: "New Team Created!",
+=======
+        title: "New Group Chat Created!",
+>>>>>>> 7ac9e092c922359cb1d0414dd04953504d570f77
         status: "success",
         duration: 5000,
         isClosable: true,
@@ -141,13 +145,21 @@ const GroupChatModal = ({ children }) => {
             display={"flex"}
             justifyContent={"center"}
           >
+<<<<<<< HEAD
             Create New Team
+=======
+            Create Group Chat
+>>>>>>> 7ac9e092c922359cb1d0414dd04953504d570f77
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody display={"flex"} flexDir={"column"} alignItems={"center"}>
             <FormControl>
               <Input
+<<<<<<< HEAD
                 placeholder="Team Name"
+=======
+                placeholder="Chat Name"
+>>>>>>> 7ac9e092c922359cb1d0414dd04953504d570f77
                 mb={3}
                 onChange={(e) => setGroupChatName(e.target.value)}
               />
@@ -191,7 +203,11 @@ const GroupChatModal = ({ children }) => {
           </ModalBody>
           <ModalFooter>
             <Button colorScheme="blue" onClick={handleSubmit}>
+<<<<<<< HEAD
               Create Team
+=======
+              Create Chat
+>>>>>>> 7ac9e092c922359cb1d0414dd04953504d570f77
             </Button>
           </ModalFooter>
         </ModalContent>

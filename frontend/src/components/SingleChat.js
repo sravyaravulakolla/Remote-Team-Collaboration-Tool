@@ -356,9 +356,15 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           justifyContent={"center"}
           h={"100%"}
         >
+<<<<<<< HEAD
           {/* <Text fontSize={"3xl"} pb={3} fontFamily={"Work sans"}>
             Click on a user to start chatting
           </Text> */}
+=======
+          <Text fontSize={"3xl"} pb={3} fontFamily={"Work sans"}>
+            Click on a user to start chatting
+          </Text>
+>>>>>>> 7ac9e092c922359cb1d0414dd04953504d570f77
         </Box>
       )}
     </>

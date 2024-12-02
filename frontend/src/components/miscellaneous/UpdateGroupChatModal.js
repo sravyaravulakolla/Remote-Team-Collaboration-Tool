@@ -134,7 +134,11 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain, fetchMessages }) => {
   const handleAddUser = async (user1) => {
     if (selectedChat.users.find((u) => u._id === user1._id)) {
       toast({
+<<<<<<< HEAD
         title: "User Already in team!",
+=======
+        title: "User Already in group!",
+>>>>>>> 7ac9e092c922359cb1d0414dd04953504d570f77
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -213,7 +217,11 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain, fetchMessages }) => {
             </Box>
             <FormControl display={"flex"}>
               <Input
+<<<<<<< HEAD
                 placeholder="Team Name"
+=======
+                placeholder="Chat Name"
+>>>>>>> 7ac9e092c922359cb1d0414dd04953504d570f77
                 mb={3}
                 value={groupChatName}
                 onChange={(e) => setGroupChatName(e.target.value)}
@@ -230,7 +238,11 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain, fetchMessages }) => {
             </FormControl>
             <FormControl>
               <Input
+<<<<<<< HEAD
                 placeholder="Add User to team"
+=======
+                placeholder="Add User to group"
+>>>>>>> 7ac9e092c922359cb1d0414dd04953504d570f77
                 mb={1}
                 onChange={(e) => handleSearch(e.target.value)}
               />
@@ -249,7 +261,11 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain, fetchMessages }) => {
           </ModalBody>
           <ModalFooter>
             <Button onClick={() => handleRemove(user)} colorScheme="red">
+<<<<<<< HEAD
               Leave Team
+=======
+              Leave Group
+>>>>>>> 7ac9e092c922359cb1d0414dd04953504d570f77
             </Button>
           </ModalFooter>
         </ModalContent>
