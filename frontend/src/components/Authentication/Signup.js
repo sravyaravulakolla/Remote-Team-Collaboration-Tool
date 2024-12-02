@@ -4,7 +4,8 @@ import React, { useState } from 'react'
 import { useHistory } from 'react-router-dom';
 
 const Signup = () => {
-  const [show, setShow] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [name, setName] = useState();
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
@@ -16,8 +17,11 @@ const Signup = () => {
   const toast = useToast();
   const history = useHistory();
 
-  const handleClick = () => {
-    setShow(!show);
+  const handleClickPassword = () => {
+    setShowPassword(!showPassword);
+  };
+  const handleClickConfirmPassword = () => {
+    setShowConfirmPassword(!showConfirmPassword);
   };
 
   const postDetails = (pic) => {
@@ -159,10 +163,10 @@ const Signup = () => {
           Password
         </FormLabel>
         <InputGroup size="md">
-          <Input type={show ? "text" : "password"} placeholder='Enter your password' onChange={(e) => setPassword(e.target.value)} />
+          <Input type={showPassword ? "text" : "password"} placeholder='Enter your password' onChange={(e) => setPassword(e.target.value)} />
           <InputRightElement width={"4.5rem"}>
-            <Button h="1.75rem" size={"sm"} onClick={handleClick}>
-              {show ? "Hide" : "Show"}
+            <Button h="1.75rem" size={"sm"} onClick={handleClickPassword}>
+              {showPassword ? "Hide" : "Show"}
             </Button>
           </InputRightElement>
         </InputGroup>
@@ -173,10 +177,10 @@ const Signup = () => {
           Confirm Password
         </FormLabel>
         <InputGroup size={"md"}>
-          <Input type={show ? "text" : "password"} placeholder='Confirm password' onChange={(e) => setConfirmPassword(e.target.value)} />
+          <Input type={showConfirmPassword ? "text" : "password"} placeholder='Confirm password' onChange={(e) => setConfirmPassword(e.target.value)} />
           <InputRightElement width={"4.5rem"}>
-            <Button h="1.75rem" size={"sm"} onClick={handleClick}>
-              {show ? "Hide" : "Show"}
+            <Button h="1.75rem" size={"sm"} onClick={handleClickConfirmPassword}>
+              {showConfirmPassword ? "Hide" : "Show"}
             </Button>
           </InputRightElement>
         </InputGroup>

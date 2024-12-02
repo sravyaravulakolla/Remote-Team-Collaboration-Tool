@@ -3,10 +3,20 @@ const Chat = require('../models/chatModel');
 const User = require('../models/userModel');
 const mongoose = require('mongoose');
 const https = require('https');
-
+const crypto = require("crypto");
+const secretKey = Buffer.from(process.env.SECRET_KEY, "hex");
 const multer = require('multer');
 const upload = multer();  // Use multer for handling file uploads
-
+const decryptToken = (encryptedToken) => {
+  const decipher = crypto.createDecipheriv(
+    "aes-256-cbc",
+    secretKey,
+    Buffer.alloc(16, 0)
+  ); // Ensure 16-byte IV for CBC mode
+  let decrypted = decipher.update(encryptedToken, "hex", "utf8");
+  decrypted += decipher.final("utf8");
+  return decrypted;
+};
 // Function to get the GitHub username (owner) from the group admin's token
 const getGitHubUsername = async (token) => {
   try {
@@ -14,7 +24,7 @@ const getGitHubUsername = async (token) => {
 
     const response = await axios.get('https://api.github.com/user', {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${decryptToken(token)}`,
         'Content-Type': 'application/json',
       },
     });
@@ -65,7 +75,7 @@ const fetchRepositoryBranches = async (req, res) => {
     const branchesUrl = `https://api.github.com/repos/${ownerUsername}/${repositoryName}/branches`;
     const response = await axios.get(branchesUrl, {
       headers: {
-        Authorization: `Bearer ${groupAdmin.githubToken}`,
+        Authorization: `Bearer ${decryptToken(groupAdmin.githubToken)}`,
         'Content-Type': 'application/json',
       },
     });
@@ -93,7 +103,7 @@ const fetchTree = async (owner, repo, path = '', branch = 'main', token) => {
     // Make the request
     const response = await axios.get(url, {
       headers: {
-        Authorization: `token ${token}`,
+        Authorization: `token ${decryptToken(token)}`,
         httpsAgent: new https.Agent({ rejectUnauthorized: false }), // Disable SSL verification for local testing
       },
     });
@@ -178,7 +188,7 @@ const fetchFileContent = async (req, res) => {
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
     const response = await axios.get(url, {
       headers: {
-        Authorization: `token ${user.githubToken}`,
+        Authorization: `token ${decryptToken(user.githubToken)}`,
         'Content-Type': 'application/json',
       },
     });
@@ -220,7 +230,7 @@ async function fetchCommits(req, res) {
     const response = await axios.get(url, {
       params: { sha: branch },  // Fetch commits for the selected branch
       headers: {
-        Authorization: `Bearer ${user.githubToken}`,  // Use the user's GitHub token
+        Authorization: `Bearer ${decryptToken(user.githubToken)}`,  // Use the user's GitHub token
         'Content-Type': 'application/json',
       },
     });
@@ -250,7 +260,7 @@ const uploadFileToGitHub = async ({ repo, branch, path, token, fileBuffer, commi
       branch: branch, // Branch to commit the file to
     }, {
       headers: {
-        Authorization: `token ${token}`, // GitHub token for authorization
+        Authorization: `token ${decryptToken(token)}`, // GitHub token for authorization
         'Accept': 'application/vnd.github.v3+json', // Specify GitHub API version
       },
     });
@@ -338,7 +348,7 @@ const fetchFolders = async (req, res) => {
     // Make the request to the GitHub API
     const response = await axios.get(url, {
       headers: {
-        Authorization: `token ${user.githubToken}`,
+        Authorization: `token ${decryptToken(user.githubToken)}`,
         'Accept': 'application/vnd.github.v3+json', // GitHub API version
         httpsAgent: new https.Agent({ rejectUnauthorized: false }), // Disable SSL for local testing
       },
@@ -385,7 +395,7 @@ const fetchFoldersRecursive = async (owner, repo, path, branch, token) => {
     // Make the request to GitHub API
     const response = await axios.get(url, {
       headers: {
-        Authorization: `token ${token}`,
+        Authorization: `token ${decryptToken(token)}`,
         'Accept': 'application/vnd.github.v3+json',
         httpsAgent: new https.Agent({ rejectUnauthorized: false }), // Disable SSL for local testing
       },

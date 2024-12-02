@@ -2,9 +2,10 @@
 .App{
     min-height: 100vh;
     display:flex;
-    background-image: url('./background.jpg');
+    background-image: url('./background.png');
     background-size: cover;
     background-position: center;
+    background-attachment: fixed;
     color: black;
 }
 ::-webkit-scrollbar{

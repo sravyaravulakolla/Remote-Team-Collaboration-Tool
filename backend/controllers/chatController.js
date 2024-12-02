@@ -3,6 +3,19 @@ const asyncHandler = require("express-async-handler");
 const Chat = require("../models/chatModel");
 const User = require("../models/userModel");
 
+const crypto = require("crypto");
+const secretKey = Buffer.from(process.env.SECRET_KEY, "hex");
+// Decrypt the token using the secret key
+const decryptToken = (encryptedToken) => {
+  const decipher = crypto.createDecipheriv(
+    "aes-256-cbc",
+    secretKey,
+    Buffer.alloc(16, 0)
+  ); // Ensure 16-byte IV for CBC mode
+  let decrypted = decipher.update(encryptedToken, "hex", "utf8");
+  decrypted += decipher.final("utf8");
+  return decrypted;
+};
 const accessChat = asyncHandler(async (req, res) => {
   const { userId } = req.body;
 
@@ -67,12 +80,13 @@ const fetchChats = asyncHandler(async (req, res) => {
 
 
 
-const getGitHubUsername = async (token) => {
+const getGitHubUsername = async (encryptedToken) => {
   try {
+    const decryptedToken = decryptToken(encryptedToken); // Decrypt the token
     const response = await axios.get("https://api.github.com/user", {
       headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${decryptedToken}`,
+        "Content-Type": "application/json",
       },
     });
     const githubUsername = response.data.login;
@@ -91,15 +105,15 @@ const createGroupChat = asyncHandler(async (req, res) => {
 
   try {
     // Step 1: Get the full user details, including githubToken
-    const usersWithDetails = await User.find({ _id: { $in: req.body.users } }).select('githubToken _id name');
-    console.log('Users with populated details:', usersWithDetails);
+    const usersWithDetails = await User.find({
+      _id: { $in: req.body.users },
+    }).select("githubToken _id name");
+    console.log("Users with populated details:", usersWithDetails);
 
-    // Step 2: Check if there are at least 2 users
-    if (usersWithDetails.length < 2) {
-      return res.status(400).send("More than 2 users are required to form a group chat");
-    }
-
+    
+    const decryptedOwnerToken = decryptToken(req.user.githubToken); // Decrypt owner's token
     // Step 3: Get the GitHub username of the current user (the owner)
+
     const githubUsername = await getGitHubUsername(req.user.githubToken);
     console.log("GitHub Username (Owner):", githubUsername);
 
@@ -114,8 +128,8 @@ const createGroupChat = asyncHandler(async (req, res) => {
       repoData,
       {
         headers: {
-          Authorization: `Bearer ${req.user.githubToken}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${decryptedOwnerToken}`,
+          "Content-Type": "application/json",
         },
       }
     );
@@ -125,7 +139,9 @@ const createGroupChat = asyncHandler(async (req, res) => {
     // Step 5: Add each user to the repository as a collaborator
     const addCollaboratorsPromises = usersWithDetails.map(async (user) => {
       if (user.githubToken) {
+        console.log(user.githubToken);
         const eachGithubUsername = await getGitHubUsername(user.githubToken);
+        console.log(eachGithubUsername);
         console.log("Adding collaborator:", eachGithubUsername);
 
         const addCollaboratorUrl = `https://api.github.com/repos/${githubUsername}/${repoName}/collaborators/${eachGithubUsername}`;
@@ -135,12 +151,16 @@ const createGroupChat = asyncHandler(async (req, res) => {
           {},
           {
             headers: {
-              Authorization: `Bearer ${req.user.githubToken}`,
-              'Content-Type': 'application/json',
+              Authorization: `Bearer ${decryptedOwnerToken}`,
+              "Content-Type": "application/json",
             },
           }
         );
-        console.log('Collaborator added successfully:', response.status, response.data);
+        console.log(
+          "Collaborator added successfully:",
+          response.status,
+          response.data
+        );
       } else {
         console.warn(`User ${user.name} does not have a valid GitHub token.`);
       }
@@ -153,8 +173,10 @@ const createGroupChat = asyncHandler(async (req, res) => {
     // Step 6: Create an initial commit (e.g., a README.md file) to initialize the 'main' branch
     const createInitialCommit = async () => {
       const newFile = {
-        message: 'Initial commit',
-        content: Buffer.from('# New Repo\nThis is a new repository').toString('base64'),  // Base64-encoded content of README.md
+        message: "Initial commit",
+        content: Buffer.from("# New Repo\nThis is a new repository").toString(
+          "base64"
+        ), // Base64-encoded content of README.md
       };
 
       const response = await axios.put(
@@ -162,22 +184,25 @@ const createGroupChat = asyncHandler(async (req, res) => {
         newFile,
         {
           headers: {
-            Authorization: `Bearer ${req.user.githubToken}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${decryptedOwnerToken}`,
+            "Content-Type": "application/json",
           },
         }
       );
 
-      console.log('Initial commit created successfully:', response.data.commit.sha);
+      console.log(
+        "Initial commit created successfully:",
+        response.data.commit.sha
+      );
     };
 
-    await createInitialCommit();  // Call this function to create the first commit
+    await createInitialCommit(); // Call this function to create the first commit
 
     // Step 7: Create branches for each user
     const userBranchNames = {}; // Track the count of users with the same name to ensure uniqueness
 
     const createBranchesPromises = usersWithDetails.map(async (user) => {
-      let branchName = `${user.name.replace(/\s+/g, '-').toLowerCase()}-branch`; // Example: john-doe-branch
+      let branchName = `${user.name.replace(/\s+/g, "-").toLowerCase()}-branch`; // Example: john-doe-branch
 
       // Check if a branch with this name already exists for this user
       if (userBranchNames[branchName]) {
@@ -192,8 +217,8 @@ const createGroupChat = asyncHandler(async (req, res) => {
         `https://api.github.com/repos/${githubUsername}/${repoName}/git/refs/heads/main`,
         {
           headers: {
-            Authorization: `Bearer ${req.user.githubToken}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${decryptedOwnerToken}`,
+            "Content-Type": "application/json",
           },
         }
       );
@@ -213,12 +238,15 @@ const createGroupChat = asyncHandler(async (req, res) => {
         branchData,
         {
           headers: {
-            Authorization: `Bearer ${req.user.githubToken}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${decryptedOwnerToken}`,
+            "Content-Type": "application/json",
           },
         }
       );
-      console.log(`Branch created for ${user.name}:`, createBranchResponse.data);
+      console.log(
+        `Branch created for ${user.name}:`,
+        createBranchResponse.data
+      );
     });
 
     // Wait for all branch creation promises to finish
@@ -239,7 +267,6 @@ const createGroupChat = asyncHandler(async (req, res) => {
       .populate("groupAdmin", "-password");
 
     res.status(200).json(fullGroupChat);
-
   } catch (error) {
     console.error("Error during group chat creation:", error);
     if (!res.headersSent) {
