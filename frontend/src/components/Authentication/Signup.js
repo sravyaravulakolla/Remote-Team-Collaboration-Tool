@@ -1,11 +1,14 @@
 import { Button, FormControl, FormLabel, Input, InputGroup, InputRightElement, useToast, VStack, Text, Box } from '@chakra-ui/react'
 import axios from 'axios';
 import React, { useState } from 'react'
+import { useChatState } from "../../Context/ChatProvider";
+
 import { useHistory } from 'react-router-dom';
+const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
 const Signup = () => {
-  const [show, setShow] = useState(false);
-  const [name, setName] = useState();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);  const [name, setName] = useState();
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
   const [confirmPassword, setConfirmPassword] = useState();
@@ -15,9 +18,13 @@ const Signup = () => {
   const [showInstructions, setShowInstructions] = useState(false); // State for toggling instructions
   const toast = useToast();
   const history = useHistory();
+  const { setUser } = useChatState(); // Get setUser from context
 
-  const handleClick = () => {
-    setShow(!show);
+  const handleClickPassword = () => {
+    setShowPassword(!showPassword);
+  };
+  const handleClickConfirmPassword = () => {
+    setShowConfirmPassword(!showConfirmPassword);
   };
 
   const postDetails = (pic) => {
@@ -108,7 +115,7 @@ const Signup = () => {
 
       console.log("Sending request to /api/user with config:", config);
       // Send githubToken with the user registration data
-      const { data } = await axios.post("/api/user", { name, email, password, pic, githubToken }, config);
+      const { data } = await axios.post(`${backendUrl}/api/user`, { name, email, password, pic, githubToken }, config);
 
       console.log("API response data:", data);
 
@@ -121,6 +128,7 @@ const Signup = () => {
       });
 
       localStorage.setItem("userInfo", JSON.stringify(data));
+      setUser(data); // Update the context state with the logged-in user
       setLoading(false);
       history.push("/chats");
 
@@ -159,10 +167,9 @@ const Signup = () => {
           Password
         </FormLabel>
         <InputGroup size="md">
-          <Input type={show ? "text" : "password"} placeholder='Enter your password' onChange={(e) => setPassword(e.target.value)} />
-          <InputRightElement width={"4.5rem"}>
-            <Button h="1.75rem" size={"sm"} onClick={handleClick}>
-              {show ? "Hide" : "Show"}
+        <Input type={showPassword ? "text" : "password"} placeholder='Enter your password' onChange={(e) => setPassword(e.target.value)} />          <InputRightElement width={"4.5rem"}>
+        <Button h="1.75rem" size={"sm"} onClick={handleClickPassword}>
+        {showPassword ? "Hide" : "Show"}
             </Button>
           </InputRightElement>
         </InputGroup>
@@ -173,10 +180,9 @@ const Signup = () => {
           Confirm Password
         </FormLabel>
         <InputGroup size={"md"}>
-          <Input type={show ? "text" : "password"} placeholder='Confirm password' onChange={(e) => setConfirmPassword(e.target.value)} />
-          <InputRightElement width={"4.5rem"}>
-            <Button h="1.75rem" size={"sm"} onClick={handleClick}>
-              {show ? "Hide" : "Show"}
+        <Input type={showConfirmPassword ? "text" : "password"} placeholder='Confirm password' onChange={(e) => setConfirmPassword(e.target.value)} />          <InputRightElement width={"4.5rem"}>
+        <Button h="1.75rem" size={"sm"} onClick={handleClickConfirmPassword}>
+        {showConfirmPassword ? "Hide" : "Show"}
             </Button>
           </InputRightElement>
         </InputGroup>

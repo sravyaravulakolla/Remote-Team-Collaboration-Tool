@@ -15,6 +15,7 @@ import {
 } from '@chakra-ui/react';
 import FolderSelector from './FolderSelector';
 import axios from 'axios';
+const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
 const FileUpload = ({ owner, repo, branch, userId }) => {  // Added userId here
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -54,7 +55,7 @@ const FileUpload = ({ owner, repo, branch, userId }) => {  // Added userId here
     formData.append('userId', userId);  // Pass the userId for API call
   
     try {
-      const response = await axios.post(`http://localhost:5000/api/repo/${userId}/upload`, formData, {
+      const response = await axios.post(`${backendUrl}/api/repo/${userId}/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

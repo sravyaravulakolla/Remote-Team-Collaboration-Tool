@@ -1,6 +1,6 @@
 // routes/repoRoutes.js
 const express = require('express');
-const { getRepositoryDetails, fetchRepositoryBranches,fetchFileContent, fetchFileTree,fetchCommits,uploadFile ,fetchFolders} = require('../controllers/repoController');
+const { getRepositoryDetails, fetchRepositoryBranches,fetchFileContent, fetchFileTree,fetchCommits,uploadFile ,fetchFolders,updateGitHubToken} = require('../controllers/repoController');
 const router = express.Router();
 const multer = require('multer'); // Import multer for file handling
 
@@ -28,4 +28,7 @@ router.get('/:userId/commits', fetchCommits);
 router.post('/:userId/upload', upload.single('file'), uploadFile); // Use 'POST' for file upload
 
 router.get('/:userId/folders', fetchFolders);
+
+router.put("/:userId/update-token", updateGitHubToken);
+
 module.exports = router;

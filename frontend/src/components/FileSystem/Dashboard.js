@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Select, Box, Text, Spinner, Alert, AlertIcon } from '@chakra-ui/react';
+const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
 const Dashboard = ({ chatId, onBranchChange }) => {
   const [branches, setBranches] = useState([]); // To store the fetched branches
@@ -16,14 +17,14 @@ const Dashboard = ({ chatId, onBranchChange }) => {
 
       try {
         // First, fetch the repository details (owner, repository name)
-        const response = await axios.get(`http://localhost:5000/api/repo/${chatId}/repodetails`);
+        const response = await axios.get(`${backendUrl}/api/repo/${chatId}/repodetails`);
         const { owner, repositoryName } = response.data; // Destructure the response
 
         // Set repo info (owner and repo name)
         setRepoInfo({ owner, repo: repositoryName });
 
         // Fetch the branches based on the chatId, which will trigger the backend logic
-        const branchesResponse = await axios.get(`http://localhost:5000/api/repo/${chatId}/branches`);
+        const branchesResponse = await axios.get(`${backendUrl}/api/repo/${chatId}/branches`);
         setBranches(branchesResponse.data); // Set branches state
 
         setLoading(false); // Set loading to false once data is fetched

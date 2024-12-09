@@ -10,7 +10,7 @@ const videoRoutes = require("./routes/videoRoutes"); // Import video routes
 const repoRoutes = require("./routes/repoRoutes"); // Import repo routes
 const taskRoutes = require("./routes/taskRoutes");
 const phaseRoutes = require("./routes/phaseRoutes"); 
-const { notFound, errorHandler } = require("./middleware/errorMiddleWare");
+const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 
 dotenv.config();
 connectDB();

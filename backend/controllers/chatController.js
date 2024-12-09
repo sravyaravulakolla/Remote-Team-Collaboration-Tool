@@ -3,6 +3,20 @@ const asyncHandler = require("express-async-handler");
 const Chat = require("../models/chatModel");
 const User = require("../models/userModel");
 
+const crypto = require("crypto");
+const secretKey = Buffer.from(process.env.SECRET_KEY, "hex");
+// Decrypt the token using the secret key
+const decryptToken = (encryptedToken) => {
+  const decipher = crypto.createDecipheriv(
+    "aes-256-cbc",
+    secretKey,
+    Buffer.alloc(16, 0)
+  ); // Ensure 16-byte IV for CBC mode
+  let decrypted = decipher.update(encryptedToken, "hex", "utf8");
+  decrypted += decipher.final("utf8");
+  return decrypted;
+};
+
 const accessChat = asyncHandler(async (req, res) => {
   const { userId } = req.body;
 
@@ -67,11 +81,12 @@ const fetchChats = asyncHandler(async (req, res) => {
 
 
 
-const getGitHubUsername = async (token) => {
+const getGitHubUsername = async (encryptedToken) => {
   try {
+    const decryptedToken = decryptToken(encryptedToken); // Decrypt the token
     const response = await axios.get("https://api.github.com/user", {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${decryptedToken}`,
         'Content-Type': 'application/json',
       },
     });
@@ -93,11 +108,8 @@ const createGroupChat = asyncHandler(async (req, res) => {
     // Step 1: Get the full user details, including githubToken
     const usersWithDetails = await User.find({ _id: { $in: req.body.users } }).select('githubToken _id name');
     console.log('Users with populated details:', usersWithDetails);
+    const decryptedOwnerToken = decryptToken(req.user.githubToken); // Decrypt owner's token
 
-    // Step 2: Check if there are at least 2 users
-    if (usersWithDetails.length < 2) {
-      return res.status(400).send("More than 2 users are required to form a group chat");
-    }
 
     // Step 3: Get the GitHub username of the current user (the owner)
     const githubUsername = await getGitHubUsername(req.user.githubToken);
@@ -114,7 +126,7 @@ const createGroupChat = asyncHandler(async (req, res) => {
       repoData,
       {
         headers: {
-          Authorization: `Bearer ${req.user.githubToken}`,
+          Authorization: `Bearer ${decryptedOwnerToken}`,
           'Content-Type': 'application/json',
         },
       }
@@ -135,7 +147,7 @@ const createGroupChat = asyncHandler(async (req, res) => {
           {},
           {
             headers: {
-              Authorization: `Bearer ${req.user.githubToken}`,
+              Authorization: `Bearer ${decryptedOwnerToken}`,
               'Content-Type': 'application/json',
             },
           }
@@ -162,7 +174,7 @@ const createGroupChat = asyncHandler(async (req, res) => {
         newFile,
         {
           headers: {
-            Authorization: `Bearer ${req.user.githubToken}`,
+            Authorization: `Bearer ${decryptedOwnerToken}`,
             'Content-Type': 'application/json',
           },
         }
@@ -192,7 +204,7 @@ const createGroupChat = asyncHandler(async (req, res) => {
         `https://api.github.com/repos/${githubUsername}/${repoName}/git/refs/heads/main`,
         {
           headers: {
-            Authorization: `Bearer ${req.user.githubToken}`,
+            Authorization: `Bearer ${decryptedOwnerToken}`,
             'Content-Type': 'application/json',
           },
         }
@@ -213,7 +225,7 @@ const createGroupChat = asyncHandler(async (req, res) => {
         branchData,
         {
           headers: {
-            Authorization: `Bearer ${req.user.githubToken}`,
+            Authorization: `Bearer ${decryptedOwnerToken}`,
             'Content-Type': 'application/json',
           },
         }
@@ -275,6 +287,8 @@ const renameGroup = asyncHandler(async (req, res) => {
 
 const addToGroup = asyncHandler(async (req, res) => {
   const { chatId, userId } = req.body;
+
+  // Find the chat by ID
   const added = await Chat.findByIdAndUpdate(
     chatId,
     { $push: { users: userId } },
@@ -286,14 +300,74 @@ const addToGroup = asyncHandler(async (req, res) => {
   if (!added) {
     res.status(404).send({ message: "Chat Not Found" });
     throw new Error("Chat Not Found");
-  } else {
-    res.json(added);
   }
-});
 
+  // Get the current GitHub token of the group admin
+  const decryptedAdminToken = decryptToken(added.groupAdmin.githubToken); // Decrypt the admin's GitHub token
+
+  // Find the new user added to the group
+  const newUser = added.users.find((user) => user._id.toString() === userId);
+  if (!newUser) {
+    return res.status(404).send({ message: "New user not found in the group" });
+  }
+
+  // Get the GitHub username of the new user (to add as a collaborator)
+  try {
+    const newUserGithubUsername = await getGitHubUsername(newUser.githubToken);
+// console.log("new user:",newUserGithubUsername);
+    // Add the new user as a collaborator to the GitHub repository
+    const repoName = added.repositoryName;
+    const githubUsername = await getGitHubUsername(added.groupAdmin.githubToken); // GitHub username of the admin
+    // console.log("new user:",githubUsername);
+    const addCollaboratorUrl = `https://api.github.com/repos/${githubUsername}/${repoName}/collaborators/${newUserGithubUsername}`;
+
+    await axios.put(
+      addCollaboratorUrl,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${decryptedAdminToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    console.log('Collaborator added successfully:', newUserGithubUsername);
+  } catch (error) {
+    console.error("Error adding collaborator to GitHub:", error.message);
+    return res.status(500).send({ message: "Failed to add collaborator to GitHub" });
+  }
+
+  res.json(added); // Send the updated chat object
+});
 const removeFromGroup = asyncHandler(async (req, res) => {
   const { chatId, userId } = req.body;
-  const removed = await Chat.findByIdAndUpdate(
+
+  // Step 1: Find the chat by ID
+  const chat = await Chat.findById(chatId)
+    .populate("users", "-password")
+    .populate("groupAdmin", "-password");
+
+  if (!chat) {
+    return res.status(404).send({ message: "Chat Not Found" });
+  }
+
+  // Step 2: Find the user to be removed from the chat
+  const userToRemove = chat.users.find((user) => user._id.toString() === userId);
+
+  if (!userToRemove) {
+    return res.status(404).send({ message: "User not found in this chat" });
+  }
+
+  // Step 3: Get the GitHub username of the user to be removed
+  let removedUserGithubUsername;
+  try {
+    removedUserGithubUsername = await getGitHubUsername(userToRemove.githubToken);
+  } catch (error) {
+    return res.status(500).send({ message: "Failed to fetch GitHub username" });
+  }
+
+  // Step 4: Remove the user from the chat group (this is now safe)
+  const updatedChat = await Chat.findByIdAndUpdate(
     chatId,
     { $pull: { users: userId } },
     { new: true }
@@ -301,13 +375,32 @@ const removeFromGroup = asyncHandler(async (req, res) => {
     .populate("users", "-password")
     .populate("groupAdmin", "-password");
 
-  if (!removed) {
-    res.status(404).send({ message: "Chat Not Found" });
-    throw new Error("Chat Not Found");
-  } else {
-    res.json(removed);
+  // Step 5: Decrypt the admin's GitHub token and remove the user as a collaborator
+  const decryptedAdminToken = decryptToken(updatedChat.groupAdmin.githubToken);
+
+  const repoName = updatedChat.repositoryName;
+  const githubUsername = await getGitHubUsername(updatedChat.groupAdmin.githubToken); // GitHub username of the admin
+
+  try {
+    const removeCollaboratorUrl = `https://api.github.com/repos/${githubUsername}/${repoName}/collaborators/${removedUserGithubUsername}`;
+    
+    await axios.delete(removeCollaboratorUrl, {
+      headers: {
+        Authorization: `Bearer ${decryptedAdminToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    console.log('Collaborator removed successfully:', removedUserGithubUsername);
+  } catch (error) {
+    console.error("Error removing collaborator from GitHub:", error.message);
+    return res.status(500).send({ message: "Failed to remove collaborator from GitHub" });
   }
+
+  // Step 6: Return the updated chat object
+  res.json(updatedChat);
 });
+
+
 
 const getGroupAdminUsername = async (req, res) => {
   const { chatId } = req.params;

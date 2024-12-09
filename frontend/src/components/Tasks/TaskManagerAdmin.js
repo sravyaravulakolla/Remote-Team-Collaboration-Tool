@@ -15,6 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { AddIcon } from "@chakra-ui/icons";
 import axios from "axios";
+const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
 const TaskManagerAdmin = ({ selectedChat }) => {
   const [phases, setPhases] = useState([]);
@@ -38,7 +39,7 @@ const TaskManagerAdmin = ({ selectedChat }) => {
   // Fetch phases for the selected chat
   const fetchPhases = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/phase/${selectedChat._id}/phases`);
+      const response = await axios.get(`${backendUrl}/api/phase/${selectedChat._id}/phases`);
       setPhases(response.data.phases || []);
       // Fetch tasks for each phase after loading phases
       fetchTasksForPhases(response.data.phases);
@@ -53,7 +54,7 @@ const TaskManagerAdmin = ({ selectedChat }) => {
     for (let i = 0; i < phases.length; i++) {
       const phaseId = phases[i]._id;
       try {
-        const tasksResponse = await axios.get(`http://localhost:5000/api/tasks/${phaseId}/tasks`);
+        const tasksResponse = await axios.get(`${backendUrl}/api/tasks/${phaseId}/tasks`);
         updatedPhases[i].tasks = tasksResponse.data.tasks || [];
       } catch (error) {
         console.error(`Error fetching tasks for phase ${phaseId}:`, error);
@@ -67,7 +68,7 @@ const TaskManagerAdmin = ({ selectedChat }) => {
     if (newPhaseName.trim() !== "") {
       try {
         const response = await axios.post(
-          `http://localhost:5000/api/phase/${selectedChat._id}/phases`,
+          `${backendUrl}/api/phase/${selectedChat._id}/phases`,
           { phaseName: newPhaseName }
         );
         setPhases([...phases, { ...response.data.phase, tasks: [] }]);
@@ -82,7 +83,7 @@ const TaskManagerAdmin = ({ selectedChat }) => {
     const phaseId = phases[phaseIndex]._id; // Get the phaseId from the selected phase
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/tasks/${phaseId}/tasks/${taskId}/status`, // Include phaseId in the URL
+        `${backendUrl}/api/tasks/${phaseId}/tasks/${taskId}/status`, // Include phaseId in the URL
         { status }  // Ensure status is correctly sent here
       );
   
@@ -102,14 +103,13 @@ const TaskManagerAdmin = ({ selectedChat }) => {
     }
   };
   
-  
 
   // Add a task to a specific phase
   const addTask = async (phaseIndex) => {
     const phaseId = phases[phaseIndex]._id;
     if (newTask.description.trim()) {
       try {
-        const response = await axios.post(`http://localhost:5000/api/tasks/${phaseId}/tasks`, {
+        const response = await axios.post(`${backendUrl}/api/tasks/${phaseId}/tasks`, {
           ...newTask,
           chatId: selectedChat._id,
         });
@@ -137,7 +137,7 @@ const TaskManagerAdmin = ({ selectedChat }) => {
   const deleteTask = async (phaseIndex, taskId) => {
     const phaseId = phases[phaseIndex]._id;
     try {
-      await axios.delete(`http://localhost:5000/api/tasks/${phaseId}/tasks/${taskId}`);
+      await axios.delete(`${backendUrl}/api/tasks/${phaseId}/tasks/${taskId}`);
       const updatedPhases = [...phases];
       updatedPhases[phaseIndex].tasks = updatedPhases[phaseIndex].tasks.filter(task => task._id !== taskId);
       setPhases(updatedPhases);
@@ -154,13 +154,13 @@ const TaskManagerAdmin = ({ selectedChat }) => {
   };
 
   return (
-    <Box display={"flex"} flexDir={"column"} w={"100%"}>
-      <Text pl={"49%"} fontSize="xl" fontWeight="bold">
+    <Box display={"flex"} flexDir={"column"} w={"100%"} maxW="1200px" mx="auto">
+      <Text pl={{ base: "25%", md: "49%" }} fontSize="xl" fontWeight="bold">
         Tasks
       </Text>
 
       {/* Phase Creation with "+" Button */}
-      <Box mt={4} h={"100%"} display="flex" alignItems="center">
+      <Box mt={4} h={"100%"} display="flex" justifyContent="center">
         <IconButton
           icon={<AddIcon />}
           colorScheme="blue"
@@ -176,7 +176,7 @@ const TaskManagerAdmin = ({ selectedChat }) => {
 
       {/* Conditional Input to Add New Phase */}
       {activePhaseIndex === "new" && (
-        <Box mt={2} display="flex" alignItems="center">
+        <Box mt={2} display="flex" alignItems="center" justifyContent="center">
           <Input
             placeholder="Enter phase name"
             value={newPhaseName}
@@ -184,6 +184,7 @@ const TaskManagerAdmin = ({ selectedChat }) => {
             mr={2}
             borderRadius="md"
             _focus={{ borderColor: "teal.400" }}
+            w={{ base: "80%", sm: "60%", md: "40%" }}
           />
           <Button
             colorScheme="blue"
@@ -191,6 +192,7 @@ const TaskManagerAdmin = ({ selectedChat }) => {
             borderRadius="md"
             _hover={{ bg: "blue.600" }}
             _focus={{ outline: "none" }}
+            w={{ base: "80%", sm: "60%", md: "auto" }}
           >
             Add Phase
           </Button>
@@ -205,12 +207,12 @@ const TaskManagerAdmin = ({ selectedChat }) => {
             p={4}
             border="1px solid lightgray"
             borderRadius="md"
-            w="full"
+            w="100%"
             boxShadow="md"
             _hover={{ boxShadow: "lg", transform: "scale(1.02)" }}
             transition="all 0.3s ease"
           >
-            <HStack>
+            <HStack justify="space-between">
               <Text fontSize="lg" fontWeight="bold">
                 {phase.phaseName}
               </Text>
@@ -236,6 +238,7 @@ const TaskManagerAdmin = ({ selectedChat }) => {
                   mt={2}
                   borderRadius="md"
                   _focus={{ borderColor: "teal.400" }}
+                  w="100%"
                 />
                 <Select
                   placeholder="Assign To"
@@ -254,8 +257,9 @@ const TaskManagerAdmin = ({ selectedChat }) => {
                   mt={2}
                   borderRadius="md"
                   _focus={{ borderColor: "teal.400" }}
+                  w="100%"
                 >
-                  {selectedChat.users.map((user) => (
+                  {selectedChat.users?.map((user) => (
                     <option key={user._id} value={user._id}>
                       {user.name}
                     </option>
@@ -268,87 +272,81 @@ const TaskManagerAdmin = ({ selectedChat }) => {
                   mt={2}
                   borderRadius="md"
                   _focus={{ borderColor: "teal.400" }}
+                  w="100%"
                 />
                 <Button
-                  colorScheme="teal"
-                  mt={2}
+                  colorScheme="blue"
                   onClick={() => addTask(index)}
+                  mt={4}
+                  w="100%"
                   borderRadius="md"
-                  _hover={{ bg: "teal.500" }}
+                  _hover={{ bg: "blue.600" }}
                 >
-                  Add Task to {phase.phaseName}
+                  Add Task
                 </Button>
               </Box>
             )}
 
-            {/* Display Tasks within Each Phase */}
+            {/* Task List */}
             <Box mt={4}>
-              <Text fontSize="md" fontWeight="bold">
-                Tasks in {phase.phaseName}
-              </Text>
-              {phase.tasks?.length > 0 ? (
-                phase.tasks.map((task) => (
-                  <Box
-                    key={task._id}
-                    p={2}
-                    mt={2}
-                    border="1px solid lightgray"
-                    borderRadius="md"
-                    boxShadow="sm"
-                    display="flex"
-                    justifyContent="space-between"
-                    _hover={{ boxShadow: "md", transform: "scale(1.02)" }}
-                    transition="all 0.3s ease"
-                  >
-                    <Box>
-                      <Text>
-                        <strong>Task:</strong> {task.description}
-                      </Text>
-                      <Text>
-                        <strong>Assigned To:</strong> {task.assignedToName || "Not Assigned"}
-                      </Text>
-                      <Text>
-                        <strong>Due Date:</strong> {task.dueDate}
-                      </Text>
-                    </Box>
-
-                    <Box ml="auto" display="flex" alignItems="center">
-                      {/* Task Status Update with Menu */}
-                      <Menu>
-                        <MenuButton as={Button} colorScheme="teal" mt={2} borderRadius="md">
-                          {task.status || "Pending"}
-                        </MenuButton>
-                        <MenuList>
-                          <MenuItem onClick={() => updateTaskStatus(task._id, index, "pending")}>
-                            Pending
-                          </MenuItem>
-                          <MenuItem onClick={() => updateTaskStatus(task._id, index, "in-progress")}>
-                            In Progress
-                          </MenuItem>
-                          <MenuItem onClick={() => updateTaskStatus(task._id, index, "completed")}>
-                            Completed
-                          </MenuItem>
-                        </MenuList>
-                      </Menu>
-
-                      {/* Right-aligned Delete Button */}
-                      <Button
-                        colorScheme="red"
-                        size="sm"
-                        ml={4}
-                        mt={2}
-                        onClick={() => deleteTask(index, task._id)}
-                        borderRadius="md"
-                        _hover={{ bg: "red.500" }}
-                      >
-                        Delete Task
-                      </Button>
-                    </Box>
+              {phase.tasks?.map((task) => (
+                <Box
+                  key={task._id}
+                  p={2}
+                  mt={2}
+                  border="1px solid lightgray"
+                  borderRadius="md"
+                  boxShadow="sm"
+                  display="flex"
+                  flexDirection={{ base: "column", md: "row" }}  // Stack vertically on mobile
+                  justifyContent="space-between"
+                  _hover={{ boxShadow: "md", transform: "scale(1.02)" }}
+                  transition="all 0.3s ease"
+                >
+                  <Box>
+                    <Text>
+                      <strong>Task:</strong> {task.description}
+                    </Text>
+                    <Text>
+                      <strong>Assigned To:</strong> {task.assignedToName || "Not Assigned"}
+                    </Text>
+                    <Text>
+                      <strong>Due Date:</strong> {task.dueDate}
+                    </Text>
                   </Box>
-                ))
-              ) : (
-                <Text color="gray.500">No tasks added yet.</Text>
-              )}
+
+                  <Box ml="auto" display="flex" alignItems="center">
+                    <Menu>
+                      <MenuButton as={Button} colorScheme="teal" mt={2} borderRadius="md">
+                        {task.status || "Pending"}
+                      </MenuButton>
+                      <MenuList>
+                        <MenuItem onClick={() => updateTaskStatus(task._id, index, "pending")}>
+                          Pending
+                        </MenuItem>
+                        <MenuItem onClick={() => updateTaskStatus(task._id, index, "in-progress")}>
+                          In Progress
+                        </MenuItem>
+                        <MenuItem onClick={() => updateTaskStatus(task._id, index, "completed")}>
+                          Completed
+                        </MenuItem>
+                      </MenuList>
+                    </Menu>
+
+                    <Button
+                      colorScheme="red"
+                      size="sm"
+                      ml={4}
+                      mt={2}
+                      onClick={() => deleteTask(index, task._id)}
+                      borderRadius="md"
+                      _hover={{ bg: "red.500" }}
+                    >
+                      Delete Task
+                    </Button>
+                  </Box>
+                </Box>
+              ))}
             </Box>
           </Box>
         ))}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Box, Text, List, ListItem, Spinner } from '@chakra-ui/react';
+const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
 const ActivityFeed = ({ selectedBranch, chatId, userId }) => {
   const [activities, setActivities] = useState([]);
@@ -18,11 +19,11 @@ const ActivityFeed = ({ selectedBranch, chatId, userId }) => {
       try {
         setLoading(true);
         // Fetch repo details using chatId (as done in FileExplorer)
-        const { data: repoResponse } = await axios.get(`http://localhost:5000/api/repo/${chatId}/repodetails`);
+        const { data: repoResponse } = await axios.get(`${backendUrl}/api/repo/${chatId}/repodetails`);
         const { owner, repositoryName } = repoResponse;
         
         // Fetch commit data based on repo details and selectedBranch
-        const response = await axios.get(`http://localhost:5000/api/repo/${userId}/commits`, {
+        const response = await axios.get(`${backendUrl}/api/repo/${userId}/commits`, {
           params: { owner, repositoryName, branch: selectedBranch }
         });
 

@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 const FileSystemOptions = ({ onSelectOption }) => {
   return (
     <Box p={4} border="1px" borderRadius="md" borderColor="gray.200">
-      <Text fontSize="2xl" mb={4}>File System Options</Text>
+      {/* <Text fontSize="2xl" mb={4}>File System Options</Text> */}
 
       <Grid templateColumns="repeat(3, 1fr)" gap={4}>
         {/* Option: Dashboard */}

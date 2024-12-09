@@ -31,8 +31,9 @@ import FileExplorer from './FileSystem/FileExplorer';
 import ActivityFeed from './FileSystem/ActivityFeed';
 import TaskManagerAdmin from "./Tasks/TaskManagerAdmin";
 import UserTaskViewer from "./Tasks/UserTaskViewer";
-const ENDPOINT = "http://localhost:5000";
+const ENDPOINT = process.env.REACT_APP_BACKEND_URL;
 var socket, selectedChatCompare;
+const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [loading, setLoading] = useState(false);
@@ -43,8 +44,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [socketConnected, setSocketConnected] = useState(false);
   const [typing, setTyping] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [isInCall, setIsInCall] = useState(false);
-  const [isRinging, setIsRinging] = useState(false); // For showing ringing notification
+  
   const { user, selectedChat, setSelectedChat, notifications, setNotifications } = useChatState();
   const toast = useToast();
 
@@ -63,21 +63,12 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     socket.emit("setup", user);
     socket.on("connected", () => setSocketConnected(true));
 
-    // Ring event when call is initiated
-    socket.on("ring", () => {
-      setIsRinging(true);
-      setTimeout(() => setIsRinging(false), 30000); // Ring timeout 30s
-    });
-
-    socket.on("join call", () => setIsInCall(true));
-    socket.on("call end", () => setIsInCall(false));
-  }, []);
+    
+  });
   const handleCallToggle = () => {
-    if (!isInCall) {
       const videoCallUrl = `/video-call/${selectedChat._id}`;
       window.open(videoCallUrl, "_blank"); // Open video call in a new tab
-    }
-    setIsInCall(!isInCall);
+    
   };
 
   const sendMessage = async (event) => {
@@ -92,7 +83,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         };
         setNewMessage("");
         const { data } = await axios.post(
-          "/api/message",
+          `${backendUrl}/api/message`,
           {
             content: newMessage,
             chatId: selectedChat._id,
@@ -136,7 +127,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       };
       setLoading(true);
       const { data } = await axios.get(
-        `/api/message/${selectedChat._id}`,
+        `${backendUrl}/api/message/${selectedChat._id}`,
         config
       );
       // console.log(messages);
@@ -217,10 +208,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             <Button
               onClick={handleCallToggle}
               ml={4}
-              colorScheme={isInCall ? "red" : "blue"}
+              colorScheme="blue"
             >
-              {isInCall ? <CloseIcon boxSize={6} /> : <PhoneIcon boxSize={6} />}
-            </Button>
+              <PhoneIcon boxSize={6} />
+             </Button>
             {!selectedChat.isGroupChat ? (
               <>
                 {getSender(user, selectedChat.users)}

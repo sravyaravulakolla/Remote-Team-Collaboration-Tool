@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import FileTree from './FileTree';
 import { Box, Spinner, Text, Center, Alert, AlertIcon, AlertTitle, AlertDescription } from '@chakra-ui/react';
 import axios from 'axios';
+const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
 const FileExplorer = ({ selectedBranch, chatId, userId }) => {  
   const [repoInfo, setRepoInfo] = useState({ owner: '', repo: '' });
@@ -13,7 +14,7 @@ const FileExplorer = ({ selectedBranch, chatId, userId }) => {
       try {
         setLoading(true);
         // Fetch repo details using chatId (which is passed from parent)
-        const { data: repoResponse } = await axios.get(`http://localhost:5000/api/repo/${chatId}/repodetails`);
+        const { data: repoResponse } = await axios.get(`${backendUrl}/api/repo/${chatId}/repodetails`);
         const { owner, repositoryName } = repoResponse;
 
         setRepoInfo({ owner, repo: repositoryName });

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Box, Collapse, Text, Heading, Button, VStack, Divider, Icon, Grid } from '@chakra-ui/react';
 import { ChevronDownIcon, ChevronRightIcon } from '@chakra-ui/icons';
 import FileUpload from './FileUpload';
+const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
 const FileTree = ({ owner, repo, branch, userId }) => {  // Destructure userId here
   const [treeData, setTreeData] = useState(null);
@@ -15,7 +16,7 @@ const FileTree = ({ owner, repo, branch, userId }) => {  // Destructure userId h
   // Fetch file tree with lazy loading for directories
   const fetchTree = async (path = '') => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/repo/${userId}/tree`, {  // Use userId here
+      const response = await axios.get(`${backendUrl}/api/repo/${userId}/tree`, {  // Use userId here
         params: { owner, repo, branch, path },
       });
 
@@ -61,7 +62,7 @@ const FileTree = ({ owner, repo, branch, userId }) => {  // Destructure userId h
   // Fetch file content
   const fetchFileContent = async (path) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/repo/${userId}/file`, {  // Use userId here
+      const response = await axios.get(`${backendUrl}/api/repo/${userId}/file`, {  // Use userId here
         params: { owner, repo, branch, path },
       });
 

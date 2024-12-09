@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Button, VStack } from '@chakra-ui/react';
+const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
 const FolderSelector = ({ owner, repo, branch, userId, onSelect }) => {
     const [folders, setFolders] = useState([]);
@@ -22,9 +23,9 @@ const FolderSelector = ({ owner, repo, branch, userId, onSelect }) => {
         setLoading(true); // Start loading
 
         try {
-            // const s='http://localhost:5000/api/repo/' + userId + '/tree';
+            // const s='/api/repo/' + userId + '/tree';
             // console.log('s',s);
-            const response = await axios.get('http://localhost:5000/api/repo/' + userId + '/folders', {
+            const response = await axios.get(backendUrl+'/api/repo/' + userId + '/folders', {
                 params: { owner, repo, branch, path },
             });
 

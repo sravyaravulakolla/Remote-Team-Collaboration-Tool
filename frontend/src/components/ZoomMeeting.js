@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
+const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
 const ZoomMeeting = () => {
   const { roomId } = useParams(); // Retrieve the chatId from the URL
@@ -13,7 +14,7 @@ const ZoomMeeting = () => {
     const fetchOrCreateMeeting = async () => {
       try {
         const response = await axios.get(
-         ` /api/zoom/join-or-create-meeting/${roomId}`
+         `${backendUrl}/api/zoom/join-or-create-meeting/${roomId}`
         );
         setMeetingData(response.data); // Set the meeting details
       } catch (error) {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, Button, Menu, MenuButton, MenuList, MenuItem, Spinner } from "@chakra-ui/react";
 import axios from "axios";
+const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
 const UserTaskViewer = ({ selectedChat, user }) => {
   const [phases, setPhases] = useState([]);
@@ -19,13 +20,13 @@ const UserTaskViewer = ({ selectedChat, user }) => {
       setError(null); // Reset any previous errors
 
       // Fetch phases for the selected chat
-      const response = await axios.get(`http://localhost:5000/api/phase/${selectedChat._id}/phases`);
+      const response = await axios.get(`${backendUrl}/api/phase/${selectedChat._id}/phases`);
       const phasesData = response.data.phases || [];
 
       // Fetch tasks for each phase and filter tasks assigned to the current user
       const updatedPhases = await Promise.all(
         phasesData.map(async (phase) => {
-          const tasksResponse = await axios.get(`http://localhost:5000/api/tasks/${phase._id}/tasks`);
+          const tasksResponse = await axios.get(`${backendUrl}/api/tasks/${phase._id}/tasks`);
           const filteredTasks = tasksResponse.data.tasks.filter((task) => {
             return task.assignedTo.toString() === user._id.toString(); // Ensure both are strings for comparison
           });
@@ -47,7 +48,7 @@ const UserTaskViewer = ({ selectedChat, user }) => {
     try {
       // Send the updated status to the backend
       const response = await axios.put(
-        `http://localhost:5000/api/tasks/${phaseId}/tasks/${taskId}/status`,
+        `${backendUrl}/api/tasks/${phaseId}/tasks/${taskId}/status`,
         { status }
       );
 
